@@ -4,7 +4,15 @@
 # This is ci.yml with the Install Nix / Setup Nix cache steps swapped
 # for the nix-seed action -- everything after that is identical -- so
 # the two workflows' wall-clock time can be compared directly across
-# the same matrix.
+# the same matrix. No pull_request trigger, unlike ci.yml: Seed only
+# publishes on push to develop, so a PR run would have nothing to mount.
+#
+# paths-ignore mirrors what Seed watches: a seed-affecting push goes
+# push -> Seed -> workflow_run -> here, so this never races ahead of
+# the seed it needs (it did, on the very first push, before this
+# chaining existed -- Seed CI ran immediately against a .seed.lock that
+# didn't exist yet). A change that doesn't touch the closure still
+# builds directly on push, same as ci.yml.
 #
 # The seed itself is produced by Seed (.github/workflows/seed.yaml).
 name: Seed CI
@@ -12,14 +20,26 @@ name: Seed CI
 on:
   push:
     branches: ["develop"]
-  pull_request:
-    branches: ["develop"]
+    paths-ignore:
+      - flake.nix
+      - flake.lock
+      - default.nix
+      - shell.nix
+      - Cargo.lock
+      - Cargo.toml
+      - .github/workflows/seed.yaml
+  workflow_run:
+    workflows:
+      - Seed
+    types:
+      - completed
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
