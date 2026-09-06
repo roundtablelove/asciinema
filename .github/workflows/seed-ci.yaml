@@ -64,13 +64,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # TEMPORARY diagnostic: what, if anything, does the seeded store
-      # still need to build for this devShell? if stdenv/bootstrap-tools
-      # show up here, they are genuinely missing from the mounted store,
-      # not just unregistered.
-      - name: Diagnose devShell closure
-        run: nix build --dry-run ".#devShells.$(nix eval --raw --expr builtins.currentSystem --impure).${{ matrix.rust }}"
-
       - name: Build
         run: nix develop .#${{ matrix.rust }} --command cargo build --verbose
 
