@@ -1,8 +1,7 @@
 {
   "repository": "ghcr.io/roundtablelove/asciinema/seed",
   "systems": {
-    "aarch64-darwin": "sha256:7a4d53ad4c4b2c7429ed0a6443fc971f03f7b21b3b4e21781d4b153867cf19f0",
-    "x86_64-linux": "sha256:3fe25ecb2e83205c408e009d383207c47892c19ee05e65cdb688ee30a2ad7f4b"
+    "x86_64-linux": "sha256:8cb5e861e8e039f92bf8acd3547ca31bafc24b85838fbcc18af3d6b208c53bf1"
   },
-  "tag": "865571cec369f58310b62379946aef74eb98df40"
+  "tag": "fbed2726bfdd0cae10804bb80c7ee210e440b94a"
 }
