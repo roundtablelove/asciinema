@@ -64,6 +64,18 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      # TEMPORARY diagnostic: is the exact stdenv-darwin devShells.default
+      # and nix-shell-env both declare (h7wdlg8...) actually present and
+      # registered valid in the mounted store, or does the darwin
+      # packaging step (bin/make-dmg's ditto copy) silently drop it?
+      # linux equivalent (jci7gw9...-stdenv-linux) included for parity,
+      # since we already know that one works.
+      - name: Diagnose stdenv presence
+        run: |
+          set -x
+          nix path-info /nix/store/h7wdlg8glf70h0y97apnwblbvrc3cwhl-stdenv-darwin 2>&1 || true
+          nix path-info /nix/store/jci7gw90lh2vdjaxkb6pzf9xp4v08wzs-stdenv-linux 2>&1 || true
+
       - name: Build
         run: nix develop .#${{ matrix.rust }} --command cargo build --verbose
 
