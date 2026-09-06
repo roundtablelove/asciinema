@@ -64,25 +64,18 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # TEMPORARY diagnostic: stdenv-darwin (h7wdlg8...) is confirmed
-      # present and valid, yet nix develop still tries to rebuild
-      # bootstrap-tools from scratch. checking every other direct input
-      # of nix-shell-env (captured by reproducing its exact .drv
-      # locally) one at a time -- one of these, not stdenv, must be
-      # what's actually missing.
+      # TEMPORARY diagnostic: all 9 previously-checked inputs are valid.
+      # the full inputDrvs list has two more: libiconv (darwin-only, from
+      # default.nix's buildInputs) and this specific bash (the actual
+      # builder for nix-shell-env, a different hash than the one used to
+      # run this very script step). one of these two is the remaining
+      # candidate.
       - name: Diagnose nix-shell-env inputs presence
         run: |
           set -x
           for p in \
-            in7kbi1l3xggkwlvcqjvlsv8lcvpkx9w-shellcheck-0.11.0 \
-            ff7s040045qm4z3znz7d1wqnrjz80rxx-rust-minimal-1.96.0 \
-            98zcwln49nsx81yj6v11nn611944h0dy-auditable-rust-minimal-1.96.0 \
-            skm9vqb1hz8f9rfq3y36shli06hk9kzi-cargo-build-hook.sh \
-            i3y6rcz2qcyfsx5l9dd2njr5q8vwxdzp-cargo-check-hook.sh \
-            lfz0dp98h0pk9l0a17kh4nxd713q0lzj-cargo-install-hook.sh \
-            a2xsyg3zlr3hix9gqf4dzsy5qhmv27yv-cargo-setup-hook.sh \
-            ygxqin6ydzjfawywqpp5pal8wv6sf5bh-python3-3.13.13 \
-            h7wdlg8glf70h0y97apnwblbvrc3cwhl-stdenv-darwin \
+            wjb6smwmv8cynnr776j01kjjzdks1863-libiconv-113 \
+            55976waa157aqb1ncbwm6b8sa64b6m3h-bash-5.3p9 \
           ; do
             nix path-info "/nix/store/$p" 2>&1 || true
           done
