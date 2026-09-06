@@ -1,0 +1,49 @@
+# Build the Nix Seed and push it to ghcr, then commit the digest.
+#
+# The seed is a squashfs (Linux) or disk image (macOS) of this flake's
+# build closure -- both devShells (default and msrv) and the default
+# package. Seed CI mounts it as /nix/store and runs the same cargo
+# steps as CI, offline, against it.
+#
+# Seeding is the slow half and only needs redoing when the closure
+# changes -- a dependency bump, a toolchain change -- not on every
+# commit, which is why this watches the files that decide the closure
+# rather than running on every push.
+name: Seed
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+    paths:
+      - flake.nix
+      - flake.lock
+      - default.nix
+      - shell.nix
+      - Cargo.lock
+      - Cargo.toml
+      - .github/workflows/seed.yaml
+
+jobs:
+  seed:
+    name: Build Seed
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # one platform failing should not hide the other's result
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    permissions:
+      # the digest is committed back to .seed.lock
+      contents: write
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+
+      - name: Build and push seed
+        uses: roundtablelove/nix-seed/seed@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}

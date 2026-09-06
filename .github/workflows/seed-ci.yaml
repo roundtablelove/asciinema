@@ -1,0 +1,60 @@
+# Run the same steps as CI (ci.yml), but against a Nix Seed instead of
+# nixbuild/nix-quick-install-action + nix-community/cache-nix-action.
+#
+# This is ci.yml with the Install Nix / Setup Nix cache steps swapped
+# for the nix-seed action -- everything after that is identical -- so
+# the two workflows' wall-clock time can be compared directly across
+# the same matrix.
+#
+# The seed itself is produced by Seed (.github/workflows/seed.yaml).
+name: Seed CI
+
+on:
+  push:
+    branches: ["develop"]
+  pull_request:
+    branches: ["develop"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        rust: [default, msrv]
+
+    permissions:
+      contents: read
+      # OIDC for the registry, and read access to the seed package
+      id-token: write
+      packages: read
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # replaces Install Nix + Setup Nix cache: mounts the seed as
+      # /nix/store and puts the seeded nix on PATH. no Nix installation,
+      # no cache restore/save, no substituters to reach.
+      - name: Mount seed
+        uses: roundtablelove/nix-seed@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        run: nix develop .#${{ matrix.rust }} --command cargo build --verbose
+
+      - name: Run cargo tests
+        run: nix develop .#${{ matrix.rust }} --command cargo test --verbose
+
+      - name: Run integration tests
+        run: nix develop .#${{ matrix.rust }} --command tests/integration.sh
+
+      - name: Check formatting
+        run: nix develop .#${{ matrix.rust }} --command cargo fmt --check
+
+      - name: Lint with clippy
+        run: nix develop .#${{ matrix.rust }} --command cargo clippy
