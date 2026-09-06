@@ -64,22 +64,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      # TEMPORARY diagnostic: all 9 previously-checked inputs are valid.
-      # the full inputDrvs list has two more: libiconv (darwin-only, from
-      # default.nix's buildInputs) and this specific bash (the actual
-      # builder for nix-shell-env, a different hash than the one used to
-      # run this very script step). one of these two is the remaining
-      # candidate.
-      - name: Diagnose nix-shell-env inputs presence
-        run: |
-          set -x
-          for p in \
-            wjb6smwmv8cynnr776j01kjjzdks1863-libiconv-113 \
-            55976waa157aqb1ncbwm6b8sa64b6m3h-bash-5.3p9 \
-          ; do
-            nix path-info "/nix/store/$p" 2>&1 || true
-          done
-
       - name: Build
         run: nix develop .#${{ matrix.rust }} --command cargo build --verbose
 
