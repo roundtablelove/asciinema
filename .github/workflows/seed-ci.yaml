@@ -64,6 +64,23 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: debug validity
+        if: ${{ matrix.os == 'macos-latest' && matrix.rust == 'default' }}
+        run: |
+          for p in \
+            /nix/store/h7wdlg8glf70h0y97apnwblbvrc3cwhl-stdenv-darwin \
+            /nix/store/0y3vzjqz42dmyasywgr6ipcfb0nwdzvy-stdenv-darwin \
+            /nix/store/55976waa157aqb1ncbwm6b8sa64b6m3h-bash-5.3p9 \
+            /nix/store/wjb6smwmv8cynnr776j01kjjzdks1863-libiconv-113 \
+            /nix/store/zy85gk6dd29slqgs1i7xclvkgvhydgxg-libiconv-113-dev \
+            /nix/store/jmww9gmmd1h1wjhlw4adcfnb2xkbab1w-bash-interactive-5.3p9 \
+          ; do
+            echo "== $p =="
+            ls -ld "$p" || echo "MISSING ON DISK"
+            nix path-info "$p" 2>&1 || echo "NOT VALID PER NIX PATH-INFO"
+          done
+          nix derivation show /nix/store/alja5k5l26l2fyhi2yscpj23bnnd3c14-nix-shell-env.drv 2>&1 | head -c 2000 || true
+
       - name: Build
         run: nix develop .#${{ matrix.rust }} --command cargo build --verbose
 
